@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 資訊顯示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        .data {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .error {
+            color: red;
+        }
+        .info {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+        }
+        .network-info, .weather-info {
+            margin-top: 20px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .info-item {
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+    </style>
+    <script>
+        async function fetchData() {
+            const apiUrlBase = 'http://192.168.0.26:5001'; // 樹莓派 API 位址
+            const dataContainer = document.getElementById('data');
+
+            try {
+                // Fetch weather info
+                const weatherResponse = await fetch(`${apiUrlBase}/weather`);
+                const weatherData = await weatherResponse.json();
+
+                // Fetch CPU temperature
+                const cpuResponse = await fetch(`${apiUrlBase}/cpu_temp`);
+                const cpuData = await cpuResponse.json();
+
+                // Fetch network information
+                const networkResponse = await fetch(`${apiUrlBase}/network`);
+                const networkData = await networkResponse.json();
+
+                // Generate weather information display
+                const weatherInfoHTML = `
+                    <div class="info-item">
+                        <strong>地點：</strong> ${weatherData.location || 'N/A'} <br>
+                        <strong>天氣：</strong> ${weatherData.weather || 'N/A'} <br>
+                        <strong>降雨機率 (%)：</strong> ${weatherData.pop || 'N/A'} <br>
+                        <strong>舒適度：</strong> ${weatherData.comfort || 'N/A'} <br>
+                        <strong>最高溫 (°C)：</strong> ${weatherData.max_temp || 'N/A'} <br>
+                        <strong>最低溫 (°C)：</strong> ${weatherData.min_temp || 'N/A'}
+                    </div>
+                `;
+
+                // Generate network information display
+                const networkInfoHTML = Object.entries(networkData.network_info).map(([iface, details]) => `
+                    <div class="info-item">
+                        <strong>介面名稱：</strong> ${iface} <br>
+                        <strong>IP 位址：</strong> ${details.IP || 'N/A'} <br>
+                        <strong>MAC 位址：</strong> ${details.MAC || 'N/A'}
+                    </div>
+                `).join('');
+
+                // Display results
+                dataContainer.innerHTML = `
+                    <div class="info">主機名稱：${networkData.hostname}</div>
+                    <div class="info">CPU 溫度：${cpuData.cpu_temperature}</div>
+                    <div class="weather-info">
+                        <h2>目前天氣：</h2>
+                        ${weatherInfoHTML}
+                    </div>
+                    <div class="network-info">
+                        <h2>網路情報：</h2>
+                        ${networkInfoHTML}
+                    </div>
+                `;
+            } catch (error) {
+                dataContainer.innerHTML = `<p class="error">資料載入錯誤：${error.message}</p>`;
+            }
+        }
+
+        window.onload = fetchData;
+    </script>
+</head>
+<body>
+    <h1>API 資訊</h1>
+    <div id="data" class="data">
+        正在載入資料...
+    </div>
+</body>
+</html>
